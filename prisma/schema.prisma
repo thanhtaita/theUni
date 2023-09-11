@@ -1,0 +1,80 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User{
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  name String?
+  email String? @unique
+  emailVerified DateTime?
+  image String?
+  hashedPassword String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  accountId String @db.ObjectId
+  accounts Account[]
+
+  coursesId String[] @db.ObjectId
+  courses Course[] @relation(fields:[coursesId], references: [id])
+
+  createdRooms Room[] @relation("CreatedRooms")
+
+  joinRoomIds String[] @db.ObjectId
+  joinRooms Room[] @relation("JoinRooms", fields:[joinRoomIds], references: [id])
+}
+
+model Account{
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  provider String
+  providerAccountId String
+  refresh_token String? @db.String
+  access_token String? @db.String
+  expires_at Int?
+  token_type Int?
+  scope String?
+  id_token String?
+  session_state String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique ([provider, providerAccountId])
+}
+
+model Course{
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+  name String
+  semester String
+  permitted Boolean @default(true)
+  rooms Room[]
+  userIds String[] @db.ObjectId
+  user User[] @relation(fields:[userIds], references:[id])
+}
+
+model Room{
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+  courseId String @db.ObjectId
+  cateogry String
+  location String
+  participants Int @default(0)
+  time String
+  details String?
+
+  course Course @relation(fields: [courseId], references:[id], onDelete: Cascade)
+
+  creatorIds String @db.ObjectId
+  creator User @relation("CreatedRooms", fields: [creatorIds], references:[id])
+  
+  participantIds String[] @db.ObjectId
+  participant User[] @relation("JoinRooms", fields: [participantIds], references: [id])
+}
+
